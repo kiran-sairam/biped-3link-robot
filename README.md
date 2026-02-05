@@ -1,2 +1,3 @@
-# biped-3link-robot
-A repo for the Legged Robotics course at Northeastern University
+# EECE7398-project
+
+Run sim_full_dynamics.m to simulate the 3 link biped in the sagittal plane
