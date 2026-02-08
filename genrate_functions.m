@@ -51,20 +51,24 @@ dq = [dq1; dq2; dq3];
 % q1 is cyclic, and negative pre-impact using convention provided in the
 % figure
 
+th_st = q1;
+th_sw  = q1 - q2 + sym(pi);
+th_t = q1 - q3 + sym(pi);
+
 % Forward Kinematics - position of point masses
 % hip
-pMh = 
+pMh = r*[cos(th_st) ; sin(th_st)]
 % torso
-pMt = 
+pMt = l*[cos(th_t) ; sin(th_t)] + pMh
 % stance leg
-pm1 = 
+pm1 = (r/2)*[cos(th_st); sin(th_st)]
 % swing leg
-pm2 = 
+pm2 = (r/2)*[cos(th_sw); sin(th_sw)] + pMh
 % center of mass
-pcm = 
+M_tot = Mh + Mt + 2*m;
+pcm = (Mh*pMh + Mt*pMt + m*pm1 + m*pm2)/M_tot
 % end of swing leg
-P2 = 
-
+P2 = r*[cos(th_sw); sin(th_sw)] + pMh
 
 % Write positions to a file
 % Inputs:
