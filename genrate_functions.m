@@ -139,3 +139,38 @@ KE = 0.5*(dq')*((m*J_M1'*J_M1)+(m*J_M2'*J_M2)+(Mt*J_Torso'*J_Torso)+(J_Hip'*Mh*J
 
 PE = g *((Mt*pTorso(1))+(Mh*pHip(1))+(m*pM1(1))+(m*pM2(1)));
 
+
+%TEST CODE BELOW FOR THE 3 FOR LOOPS
+
+
+function C = coriolis_matrix(D, q, qdot)
+% CORIOLIS_MATRIX Computes the Coriolis and centrifugal matrix C(q, qdot)
+% using Christoffel symbols of the first kind.
+%
+% Inputs:
+%   D     - n x n symbolic inertia/mass matrix (function of q)
+%   q     - n x 1 symbolic vector of generalized coordinates
+%   qdot  - n x 1 symbolic vector of generalized velocities
+%
+% Output:
+%   C     - n x n symbolic Coriolis matrix
+
+n = length(q);  % number of generalized coordinates
+C = sym(zeros(n, n));
+
+for k = 1:n
+    for j = 1:n
+        c_kj = sym(0);
+        for i = 1:n
+            % Christoffel symbol: (1/2)*(dd_kj/dq_i + dd_ki/dq_j - dd_ij/dq_k)
+            christoffel = (1/2) * ( diff(D(k,j), q(i)) ...
+                                  + diff(D(k,i), q(j)) ...
+                                  - diff(D(i,j), q(k)) );
+            c_kj = c_kj + christoffel * qdot(i);
+        end
+        C(k,j) = simplify(c_kj);
+    end
+end
+
+end
+
