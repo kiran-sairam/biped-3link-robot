@@ -1,4 +1,5 @@
 clc; clear;
+format short g
 
 % ------------------------------------------------------------------------
 % Inertia Coordinate Frame Convention
@@ -15,10 +16,12 @@ clc; clear;
 % • Angles are measured CLOCKWISE and taken as POSITIVE.
 
 %% Symbols
-syms q1 q2 q3 real
-syms r l real
+syms q1 q2 q3 p_h p_v dp_h dp_v dq1 dq2 dq3 real
+syms r m Mh Mt l g real 
 
-q = [q1; q2; q3];
+q = [q1; q2; q3;];
+dq = [dq1; dq2; dq3;];
+
 
 %% Helper transforms (2D homogeneous, 3x3)
 Rot = @(th) [cos(th) -sin(th) 0;
@@ -93,7 +96,7 @@ pM1_num    = double(subs(pM1,    subs_list, vals_list));
 pM2_num    = double(subs(pM2,    subs_list, vals_list));
 
 J_Hip_num   = double(subs(J_Hip,   subs_list, vals_list));
-J_Torso_num = double(subs(J_Torso, subs_list, vals_list));
+J_Torso_num = double(subs(J_Torso, subs_list, vals_list)); 
 J_M1_num    = double(subs(J_M1,    subs_list, vals_list));
 J_M2_num    = double(subs(J_M2,    subs_list, vals_list));
 
@@ -130,3 +133,9 @@ disp("CoM pose:");
 disp(pCoM_num)
 disp("CoM velocity:");
 disp(dpCoM)
+
+% kinetic energy equations
+KE = 0.5*(dq')*((m*J_M1'*J_M1)+(m*J_M2'*J_M2)+(Mt*J_Torso'*J_Torso)+(J_Hip'*Mh*J_Hip))*dq;
+
+PE = g *((Mt*pTorso(1))+(Mh*pHip(1))+(m*pM1(1))+(m*pM2(1)));
+
