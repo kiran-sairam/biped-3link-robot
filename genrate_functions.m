@@ -135,10 +135,14 @@ disp("CoM velocity:");
 disp(dpCoM)
 
 % kinetic energy equations
-KE = 0.5*(dq')*((m*J_M1'*J_M1)+(m*J_M2'*J_M2)+(Mt*J_Torso'*J_Torso)+(J_Hip'*Mh*J_Hip))*dq;
+
+D = ((m*J_M1'*J_M1)+(m*J_M2'*J_M2)+(Mt*J_Torso'*J_Torso)+(J_Hip'*Mh*J_Hip));
+
+KE = 0.5*(dq')*(D)*dq;
 
 PE = g *((Mt*pTorso(1))+(Mh*pHip(1))+(m*pM1(1))+(m*pM2(1)));
 
+coriolis_matrix(D, q, dq);
 
 %TEST CODE BELOW FOR THE 3 FOR LOOPS
 
@@ -158,6 +162,8 @@ function C = coriolis_matrix(D, q, qdot)
 n = length(q);  % number of generalized coordinates
 C = sym(zeros(n, n));
 
+C_logic = sym(zeros(n,n));
+tic
 for k = 1:n
     for j = 1:n
         c_kj = sym(0);
@@ -171,6 +177,47 @@ for k = 1:n
         C(k,j) = simplify(c_kj);
     end
 end
+elapsed_time = toc;
+disp("Brute force elapsed time")
+disp(elapsed_time)
+disp("C_bruteforce")
+disp(C)
+
+global dict
+dict = containers.Map('KeyType', 'char', 'ValueType', 'double');
+tic
+for k = 1:n
+    for j = 1:n
+        c_kj = sym(0);
+        for i = 1:n
+            christoffel = sym(0);
+            if i ~= j
+                key = [k j i];
+                key_str = mat2str(key);
+                if isKey(dict, key_str)
+                    christoffel = dict(key);
+                
+                else
+                    % Christoffel symbol: (1/2)*(dd_kj/dq_i + dd_ki/dq_j - dd_ij/dq_k)
+                    christoffel = (1/2) * ( diff(D(k,j), q(i)) ...
+                                  + diff(D(k,i), q(j)) ...
+                                  - diff(D(i,j), q(k)) );
+                end
+            else
+                christoffel = (1/2) * ( diff(D(k,j), q(i)) ...
+                                  + diff(D(k,i), q(j)) ...
+                                  - diff(D(i,j), q(k)) );
+            end
+            c_kj = c_kj + christoffel * qdot(i);
+        end
+        C_logic(k,j) = simplify(c_kj);
+    end
+end
+elapsed_time = toc;
+disp("Logic elapsed time")
+disp(elapsed_time)
+disp("C_logic: ")
+disp(C_logic)
 
 end
 
