@@ -134,14 +134,36 @@ disp(pCoM_num)
 disp("CoM velocity:");
 disp(dpCoM)
 
-% kinetic energy equations
-KE = 0.5*(dq')*((m*J_M1'*J_M1)+(m*J_M2'*J_M2)+(Mt*J_Torso'*J_Torso)+(J_Hip'*Mh*J_Hip))*dq;
+%% --- KE Verification ---
+dq_val = [dq1_val; dq2_val; dq3_val];
 
-PE = g *((Mt*pTorso(1))+(Mh*pHip(1))+(m*pM1(1))+(m*pM2(1)));
+% KE from Cartesian velocities: sum of 0.5 * m_i * ||v_i||^2
+KE_cartesian = 0.5 * m_val  * (dpM1' * dpM1) ...
+             + 0.5 * m_val  * (dpM2' * dpM2) ...
+             + 0.5 * Mh_val * (dpHip' * dpHip) ...
+             + 0.5 * Mt_val * (dpTorso' * dpTorso);
+
+% KE from D matrix: 0.5 * dq' * D * dq
+D = (m*J_M1'*J_M1) + (m*J_M2'*J_M2) + (Mt*J_Torso'*J_Torso) + (Mh*J_Hip'*J_Hip);
+D_num = double(subs(D, [subs_list, m, Mh, Mt], [vals_list, m_val, Mh_val, Mt_val]));KE_from_D = 0.5 * dq_val' * D_num * dq_val;
+
+fprintf('\n--- KE Verification ---\n');
+fprintf('KE (Cartesian):  %.6f\n', KE_cartesian);
+fprintf('KE (D matrix):   %.6f\n', KE_from_D);
+fprintf('Difference:      %.2e\n', abs(KE_cartesian - KE_from_D));
+if abs(KE_cartesian - KE_from_D) < 1e-10
+    fprintf('PASS\n');
+else
+    fprintf('FAIL\n');
+end
+
+%% --- Symbolic KE and PE ---
+KE = 0.5 * dq' * D * dq;
+
+PE = g * ((Mt*pTorso(1)) + (Mh*pHip(1)) + (m*pM1(1)) + (m*pM2(1)));
 
 
-%TEST CODE BELOW FOR THE 3 FOR LOOPS
-
+%% --- Local functions ---
 
 function C = coriolis_matrix(D, q, qdot)
 % CORIOLIS_MATRIX Computes the Coriolis and centrifugal matrix C(q, qdot)
@@ -173,4 +195,3 @@ for k = 1:n
 end
 
 end
-
