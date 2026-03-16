@@ -134,36 +134,18 @@ disp(pCoM_num)
 disp("CoM velocity:");
 disp(dpCoM)
 
-%% --- KE Verification ---
-dq_val = [dq1_val; dq2_val; dq3_val];
+% kinetic energy equations
 
-% KE from Cartesian velocities: sum of 0.5 * m_i * ||v_i||^2
-KE_cartesian = 0.5 * m_val  * (dpM1' * dpM1) ...
-             + 0.5 * m_val  * (dpM2' * dpM2) ...
-             + 0.5 * Mh_val * (dpHip' * dpHip) ...
-             + 0.5 * Mt_val * (dpTorso' * dpTorso);
+D = ((m*J_M1'*J_M1)+(m*J_M2'*J_M2)+(Mt*J_Torso'*J_Torso)+(J_Hip'*Mh*J_Hip));
 
-% KE from D matrix: 0.5 * dq' * D * dq
-D = (m*J_M1'*J_M1) + (m*J_M2'*J_M2) + (Mt*J_Torso'*J_Torso) + (Mh*J_Hip'*J_Hip);
-D_num = double(subs(D, [subs_list, m, Mh, Mt], [vals_list, m_val, Mh_val, Mt_val]));KE_from_D = 0.5 * dq_val' * D_num * dq_val;
+KE = 0.5*(dq')*(D)*dq;
 
-fprintf('\n--- KE Verification ---\n');
-fprintf('KE (Cartesian):  %.6f\n', KE_cartesian);
-fprintf('KE (D matrix):   %.6f\n', KE_from_D);
-fprintf('Difference:      %.2e\n', abs(KE_cartesian - KE_from_D));
-if abs(KE_cartesian - KE_from_D) < 1e-10
-    fprintf('PASS\n');
-else
-    fprintf('FAIL\n');
-end
+PE = g *((Mt*pTorso(1))+(Mh*pHip(1))+(m*pM1(1))+(m*pM2(1)));
 
-%% --- Symbolic KE and PE ---
-KE = 0.5 * dq' * D * dq;
+coriolis_matrix(D, q, dq);
 
-PE = g * ((Mt*pTorso(1)) + (Mh*pHip(1)) + (m*pM1(1)) + (m*pM2(1)));
+%TEST CODE BELOW FOR THE 3 FOR LOOPS
 
-
-%% --- Local functions ---
 
 function C = coriolis_matrix(D, q, qdot)
 % CORIOLIS_MATRIX Computes the Coriolis and centrifugal matrix C(q, qdot)
@@ -180,6 +162,8 @@ function C = coriolis_matrix(D, q, qdot)
 n = length(q);  % number of generalized coordinates
 C = sym(zeros(n, n));
 
+C_logic = sym(zeros(n,n));
+tic
 for k = 1:n
     for j = 1:n
         c_kj = sym(0);
@@ -193,5 +177,46 @@ for k = 1:n
         C(k,j) = simplify(c_kj);
     end
 end
+elapsed_time = toc;
+disp("Brute force elapsed time")
+disp(elapsed_time)
+disp("C_bruteforce")
+disp(C)
+
+global dict
+dict = containers.Map('KeyType', 'char', 'ValueType', 'double');
+tic
+for k = 1:n
+    for j = 1:n
+        c_kj = sym(0);
+        for i = 1:n
+            christoffel = sym(0);
+            if i ~= j
+                key = [k j i];
+                key_str = mat2str(key);
+                if isKey(dict, key_str)
+                    christoffel = dict(key);
+                
+                else
+                    % Christoffel symbol: (1/2)*(dd_kj/dq_i + dd_ki/dq_j - dd_ij/dq_k)
+                    christoffel = (1/2) * ( diff(D(k,j), q(i)) ...
+                                  + diff(D(k,i), q(j)) ...
+                                  - diff(D(i,j), q(k)) );
+                end
+            else
+                christoffel = (1/2) * ( diff(D(k,j), q(i)) ...
+                                  + diff(D(k,i), q(j)) ...
+                                  - diff(D(i,j), q(k)) );
+            end
+            c_kj = c_kj + christoffel * qdot(i);
+        end
+        C_logic(k,j) = simplify(c_kj);
+    end
+end
+elapsed_time = toc;
+disp("Logic elapsed time")
+disp(elapsed_time)
+disp("C_logic: ")
+disp(C_logic)
 
 end
