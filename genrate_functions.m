@@ -69,16 +69,16 @@ J_M1    = simplify(jacobian(pM1,    q));
 J_M2    = simplify(jacobian(pM2,    q));
 J_M2End    = simplify(jacobian(pM2End,    q));
 
-%% Display symbolic results
-disp("pHip = ");   disp(pHip);
-disp("pTorso = "); disp(pTorso);
-disp("pM1 = ");    disp(pM1);
-disp("pM2 = ");    disp(pM2);
-
-disp("J_Hip = ");   disp(J_Hip);
-disp("J_Torso = "); disp(J_Torso);
-disp("J_M1 = ");    disp(J_M1);
-disp("J_M2 = ");    disp(J_M2);
+% %% Display symbolic results
+% disp("pHip = ");   disp(pHip);
+% disp("pTorso = "); disp(pTorso);
+% disp("pM1 = ");    disp(pM1);
+% disp("pM2 = ");    disp(pM2);
+% 
+% disp("J_Hip = ");   disp(J_Hip);
+% disp("J_Torso = "); disp(J_Torso);
+% disp("J_M1 = ");    disp(J_M1);
+% disp("J_M2 = ");    disp(J_M2);
 
 %% --- Optional: evaluate at your test values ---
 r_val  = 1.0;
@@ -100,11 +100,11 @@ J_Torso_num = double(subs(J_Torso, subs_list, vals_list));
 J_M1_num    = double(subs(J_M1,    subs_list, vals_list));
 J_M2_num    = double(subs(J_M2,    subs_list, vals_list));
 
-disp("Numeric pHip, pTorso, pM1, pM2:");
-disp(pHip_num); disp(pTorso_num); disp(pM1_num); disp(pM2_num);
-
-disp("Numeric Jacobians:");
-disp(J_Hip_num); disp(J_Torso_num); disp(J_M1_num); disp(J_M2_num);
+% disp("Numeric pHip, pTorso, pM1, pM2:");
+% disp(pHip_num); disp(pTorso_num); disp(pM1_num); disp(pM2_num);
+% 
+% disp("Numeric Jacobians:");
+% disp(J_Hip_num); disp(J_Torso_num); disp(J_M1_num); disp(J_M2_num);
 
 dq1_val = 0.5;
 dq2_val = 0.3;
@@ -115,8 +115,8 @@ dpTorso = J_Torso_num * [dq1_val; dq2_val; dq3_val];
 dpM1 = J_M1_num * [dq1_val; dq2_val; dq3_val];
 dpM2 = J_M2_num * [dq1_val; dq2_val; dq3_val];
 
-disp("Velocities in cartesian space:");
-disp(dpHip); disp(dpTorso); disp(dpM1); disp(dpM2);
+% disp("Velocities in cartesian space:");
+% disp(dpHip); disp(dpTorso); disp(dpM1); disp(dpM2);
 
 % masses 
 m_val = 1.0; 
@@ -125,22 +125,22 @@ Mt_val = 3.0;
 M_tot = Mh_val + Mt_val + 2*m_val;
 pCoM = (Mh_val*pHip + Mt_val*pTorso + m_val*pM1 + m_val*pM2)/M_tot;
 J_PCoM    = simplify(jacobian(pCoM,    q));
-disp("J_PCoM = ");    disp(J_PCoM);
-J_PCoM_num    = double(subs(J_PCoM,    subs_list, vals_list));
-pCoM_num    = double(subs(pCoM,    subs_list, vals_list));
-dpCoM = J_PCoM_num * [dq1_val; dq2_val; dq3_val];
-disp("CoM pose:");
-disp(pCoM_num)
-disp("CoM velocity:");
-disp(dpCoM)
+% disp("J_PCoM = ");    disp(J_PCoM);
+% J_PCoM_num    = double(subs(J_PCoM,    subs_list, vals_list));
+% pCoM_num    = double(subs(pCoM,    subs_list, vals_list));
+% dpCoM = J_PCoM_num * [dq1_val; dq2_val; dq3_val];
+% disp("CoM pose:");
+% disp(pCoM_num)
+% disp("CoM velocity:");
+% disp(dpCoM)
 
 % kinetic energy equations
 
-D = ((m*J_M1'*J_M1)+(m*J_M2'*J_M2)+(Mt*J_Torso'*J_Torso)+(J_Hip'*Mh*J_Hip));
+D = ((m*J_M1'*J_M1)+(m*J_M2'*J_M2)+(Mt*J_Torso'*J_Torso)+(J_Hip'*Mh*J_Hip))
 
-KE = 0.5*(dq')*(D)*dq;
+KE = 0.5*(dq')*(D)*dq
 
-PE = g *((Mt*pTorso(1))+(Mh*pHip(1))+(m*pM1(1))+(m*pM2(1)));
+PE = g *((Mt*pTorso(1))+(Mh*pHip(1))+(m*pM1(1))+(m*pM2(1)))
 
 coriolis_matrix(D, q, dq);
 
@@ -178,8 +178,8 @@ for k = 1:n
     end
 end
 elapsed_time = toc;
-disp("Brute force elapsed time")
-disp(elapsed_time)
+%disp("Brute force elapsed time");
+%disp(elapsed_time);
 disp("C_bruteforce")
 disp(C)
 
@@ -207,15 +207,26 @@ for k = 1:n
                 christoffel = (1/2) * ( diff(D(k,j), q(i)) ...
                                   + diff(D(k,i), q(j)) ...
                                   - diff(D(i,j), q(k)) );
+
+                
+                
             end
+            
+            %Rest of Christoffel Symbols are not being print as they are 0.
+            if christoffel ~= 0
+                
+                christoffel
+
+            end
+
             c_kj = c_kj + christoffel * qdot(i);
         end
         C_logic(k,j) = simplify(c_kj);
     end
 end
 elapsed_time = toc;
-disp("Logic elapsed time")
-disp(elapsed_time)
+%disp("Logic elapsed time");
+%disp(elapsed_time);
 disp("C_logic: ")
 disp(C_logic)
 
