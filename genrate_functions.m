@@ -221,3 +221,168 @@ disp(C_logic)
 
 end
 
+%%%%%%%%%%%%%%%%%% What is control input matrix? %%%%%%%%%%%%%%%%%%%%%%%%%%
+B = [0, 0; ...
+     1, 0; ...
+     0, 1];
+
+% Write 3 link model to file
+% Inputs:
+%       q
+%       dq
+%       params
+%
+% Outputs: 
+%       D: Inertia matrix
+%       C: Coriolis matrix
+%       G: Gravity matrix
+%       B: 
+%
+write_symbolic_term_to_mfile(q,dq,params,D,C,G,B)
+
+%-------------------------------------------------------------------------%
+%%%% Impact map
+
+% Using same psotion vectors as above, but taking partial with respect to qe
+% instead
+
+% Extended configuration variables
+p_e = [p_h; p_v];
+
+qe = [q; p_h; p_v];
+dqe = [dq; dp_h; dp_v];
+
+% Extended position
+pMh_e = pMh + p_e;%bruh what p_e needs to
+pMt_e = pMt + p_e;
+pm1_e = pm1 + p_e;
+pm2_e = pm2 + p_e;
+P2e = P2 + p_e;
+
+% Extended velocities
+J_mh_e   = simplify(jacobian(pMh_e,   q));
+J_mt_e   = simplify(jacobian(pMt_e, q));
+J_m1_e   = simplify(jacobian(pm1_e,    q));
+J_m2_e   = simplify(jacobian(pm2_e,    q));
+
+vMh_e = J_mh_e * [dq1; dq2; dq3];
+vMt_e = J_mt_e * [dq1; dq2; dq3];
+vm1_e = J_m1_e * [dq1; dq2; dq3];
+vm2_e = J_m2_e * [dq1; dq2; dq3];
+
+K_Mhe = 0.5*(dq')*(Mh*J_mh_e'*J_mh_e)*dq;
+K_Mte = 0.5*(dq')*(Mt*J_mt_e'*J_mt_e)*dq;
+K_m1e = 0.5*(dq')*(Mh*J_m1_e'*J_mh_e)*dq;
+K_m2e = 0.5*(dq')*(Mh*J_m2_e'*J_mh_e)*dq;
+
+Ke = K_m1e + K_Mhe + K_Mte + K_m2e;
+
+% Extended inertia matrix
+De = (Mh*J_mh_e'*J_mh_e)+(Mt*J_mt_e'*J_mt_e)+(Mh*J_m1_e'*J_mh_e)+(Mh*J_m2_e'*J_mh_e);
+
+E = simplify(jacobian(P2e,    qe));
+
+% Partial of any point on biped, hip chosen in this case
+dY_dq = jacobian(pMh_e,q);
+
+% Write impact map to a file
+% Inputs:
+%       q
+%       dq
+%       params
+%
+% Outputs: Matrices needed to compile impact map
+%       De: Extended inertia matrix
+%       E:
+%       dY_dq:
+%       
+write_symbolic_term_to_mfile(q,dq,params,De,E,dY_dq)
+
+
+%-------------------------------------------------------------------------%
+%%%% For controller
+
+% Vector fields
+fx = 
+gx = 
+
+% Bezier poly - needed for output function
+syms s delq
+%s = (q1 - q1_plus)/delq; 
+%delq = q1_minus - q1_plus 
+%ds/dt = dq1/delq; ds/dq1 = 1/delq;
+
+syms a21 a22 a23 a24 a25 
+syms a31 a32 a33 a34 a35
+
+a2 = [a21 a22 a23 a24 a25];
+a3 = [a31 a32 a33 a34 a35];
+M = 4;
+
+b2 = 0; b3 = 0;
+for k = 0:M
+    b2 = b2 + a2(1,k+1)*(factorial(M)/(factorial(k)*factorial(M-k)))*s^k*(1-s)^(M-k);
+end
+
+for k = 0:M
+    b3 = b3 + a3(1,k+1)*(factorial(M)/(factorial(k)*factorial(M-k)))*s^k*(1-s)^(M-k);
+end
+
+% Defining outputs
+
+h = [q2 - b2; q3 - b3];
+
+% y_dot = Lfh = dh/dx*fx - independent of gx*u since relative degree is 2
+% However, h is a function of (s,q2,q3), not q1 directly, so the following
+% is used:
+% dh/dq1 = dh/ds*ds/dq1 = dh/ds*1/delq
+%
+% Temporary variable that multiples the 1st column with 1/delq
+temp = sym(eye(6)); temp(1)  = 1/delq;
+
+Lfh = jacobian(h,[s; q2; q3; dq])*temp*fx;
+
+dLfh = jacobian(Lfh,[s; q2; q3; dq])*temp;
+
+% Write matrix used in feedback linearization - d/dx(Lfh) to file
+% Inputs:
+%       s = (q1 - q1_plus)/delq: gait timing variable
+%       delq = q1_minus - q1_plus: difference in cyclic variable during gait 
+%       dq1
+%       params: 
+%       a2: bezier coefficents (1st - 5th) for q2
+%       a3: bezier coefficents (1st - 5th) for q3
+%
+% Outputs:
+%       dLfh: partial of Lfh, to be used to compute L2fh and LgLfh
+%
+write_symbolic_term_to_mfile([s,delq],dq1,[a2,a3],dLfh);
+
+
+
+%-------------------------------------------------------------------------%
+%%%% For Zero Dynamics
+
+
+db_ds2 = 0;
+for k = 0:M-1
+    db_ds2 = db_ds2 + (a2(1,k+2)-a2(1,k+1))*(factorial(M)/(factorial(k)*factorial(M-k-1)))*s^k*(1-s)^(M-k-1);
+end
+
+db_ds3 = 0;
+for k = 0:M-1
+    db_ds3 = db_ds3 + (a3(1,k+2)-a3(1,k+1))*(factorial(M)/(factorial(k)*factorial(M-k-1)))*s^k*(1-s)^(M-k-1);
+end
+
+partial_db_ds2 = jacobian(db_ds2,s)*dq1/delq;
+
+partial_db_ds3 = jacobian(db_ds3,s)*dq1/delq;
+
+beta1 = [partial_db_ds2; partial_db_ds3]*dq1/delq;
+
+eta2 = jacobian(K,dq1);
+
+write_symbolic_term_to_mfile(s,[dq1, delq],[a2, a3],beta1)
+
+write_symbolic_term_to_mfile(q,dq,params,eta2)
+
