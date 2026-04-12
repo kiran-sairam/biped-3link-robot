@@ -137,7 +137,7 @@ disp(dpCoM)
 % kinetic energy equations
 
 D = ((m*J_M1'*J_M1)+(m*J_M2'*J_M2)+(Mt*J_Torso'*J_Torso)+(J_Hip'*Mh*J_Hip));
-
+disp(D)
 KE = 0.5*(dq')*(D)*dq;
 
 PE = g *((Mt*pTorso(1))+(Mh*pHip(1))+(m*pM1(1))+(m*pM2(1)));
@@ -178,14 +178,14 @@ for k = 1:n
     end
 end
 elapsed_time = toc;
-disp("Brute force elapsed time")
-disp(elapsed_time)
-disp("C_bruteforce")
-disp(C)
+% disp("Brute force elapsed time")
+% disp(elapsed_time)
+% disp("C_bruteforce")
+% disp(C)
 
 global dict
 dict = containers.Map('KeyType', 'char', 'ValueType', 'double');
-tic
+% tic
 for k = 1:n
     for j = 1:n
         c_kj = sym(0);
@@ -213,11 +213,11 @@ for k = 1:n
         C_logic(k,j) = simplify(c_kj);
     end
 end
-elapsed_time = toc;
-disp("Logic elapsed time")
-disp(elapsed_time)
-disp("C_logic: ")
-disp(C_logic)
+% elapsed_time = toc;
+% disp("Logic elapsed time")
+% disp(elapsed_time)
+% disp("C_logic: ")
+% disp(C_logic)
 
 end
 
@@ -260,25 +260,25 @@ pm2_e = pm2 + p_e;
 P2e = P2 + p_e;
 
 % Extended velocities
-J_mh_e   = simplify(jacobian(pMh_e,   q));
-J_mt_e   = simplify(jacobian(pMt_e, q));
-J_m1_e   = simplify(jacobian(pm1_e,    q));
-J_m2_e   = simplify(jacobian(pm2_e,    q));
+J_mh_e   = simplify(jacobian(pMh_e,   qe));
+J_mt_e   = simplify(jacobian(pMt_e, qe));
+J_m1_e   = simplify(jacobian(pm1_e,    qe));
+J_m2_e   = simplify(jacobian(pm2_e,    qe));
 
-vMh_e = J_mh_e * [dq1; dq2; dq3];
-vMt_e = J_mt_e * [dq1; dq2; dq3];
-vm1_e = J_m1_e * [dq1; dq2; dq3];
-vm2_e = J_m2_e * [dq1; dq2; dq3];
+vMh_e = J_mh_e * dqe;
+vMt_e = J_mt_e * dqe;
+vm1_e = J_m1_e * dqe;
+vm2_e = J_m2_e * dqe;
 
-K_Mhe = 0.5*(dq')*(Mh*J_mh_e'*J_mh_e)*dq;
-K_Mte = 0.5*(dq')*(Mt*J_mt_e'*J_mt_e)*dq;
-K_m1e = 0.5*(dq')*(Mh*J_m1_e'*J_mh_e)*dq;
-K_m2e = 0.5*(dq')*(Mh*J_m2_e'*J_mh_e)*dq;
+K_Mhe = 0.5*(dqe')*(Mh*J_mh_e'*J_mh_e)*dqe;
+K_Mte = 0.5*(dqe')*(Mt*J_mt_e'*J_mt_e)*dqe;
+K_m1e = 0.5*(dqe')*(Mh*J_m1_e'*J_mh_e)*dqe;
+K_m2e = 0.5*(dqe')*(Mh*J_m2_e'*J_mh_e)*dqe;
 
 Ke = K_m1e + K_Mhe + K_Mte + K_m2e;
 
 % Extended inertia matrix
-De = (Mh*J_mh_e'*J_mh_e)+(Mt*J_mt_e'*J_mt_e)+(Mh*J_m1_e'*J_mh_e)+(Mh*J_m2_e'*J_mh_e);
+De = (Mh*(J_mh_e)'*J_mh_e)+(Mt*(J_mt_e)'*J_mt_e)+(Mh*J_m1_e'*J_mh_e)+(Mh*J_m2_e'*J_mh_e);
 
 E = simplify(jacobian(P2e,    qe));
 
@@ -303,8 +303,8 @@ write_symbolic_term_to_mfile(q,dq,params,De,E,dY_dq)
 %%%% For controller
 
 % Vector fields
-fx = 
-gx = 
+fx = 0;
+gx = 0;
 
 % Bezier poly - needed for output function
 syms s delq
