@@ -32,11 +32,26 @@ s = func_gait_timing(q1,z_min,z_max);
 alpha2 = a(1:5);
 alpha3 = a(6:10);
 
+%Need bezier formulation
+function b = control_points(s, a2)
+    M = 4;
+    b = 0;
+    for k = 0:M
+        b = b + a2(1,k+1) * (factorial(M)/(factorial(k)*factorial(M-k))) * s^k * (1-s)^(M-k);
+    end
+end
+
+b1 = control_points(s, alpha2);
+b2 = control_points(s, alpha3);
+h_desired = [q1; b1; b2];
+q_converted = eye(3)*h_desired;
+dq_converted = jacobian(h_desired, s) * (1/delq);
+
 % find based on s and bezier definition
-q2 = 
-q3 = 
-dq2 = 
-dq3 = 
+q2 = q_converted(2);
+q3 = q_converted(3);
+dq2 = dq_converted(2);
+dq3 = dq_converted(3);
 
 q = [q1, q2, q3];
 dq = [dq1, dq2, dq3];
@@ -69,7 +84,7 @@ fx = [dq'; fx_under'];
 gx_top = [0, 0, 0]';
 gx_under = D_Inv*B;
 gx = [gx_top; gx_under];
-H1 = 
+H1 = eye(3);
 
 %------------------------------------------------------------------------%
 

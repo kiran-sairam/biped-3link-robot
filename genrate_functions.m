@@ -30,7 +30,12 @@ syms r m Mh Mt l g real
 params = [r,m,Mh,Mt,l,g];
 % Include the util and autogen folder to use write_symbolic_term_to_mfile.m
 % and export outputs to autogen folder
-set_path
+cd('C:\Users\Prath\OneDrive\Documents\GitHub\biped-3link-robot')
+
+addpath('C:\Users\Prath\OneDrive\Documents\GitHub\biped-3link-robot\util');
+
+addpath('C:\Users\Prath\OneDrive\Documents\GitHub\biped-3link-robot\autogen');
+
 %Mh - mass of hip, Mt - mass of torso, m - mass of legs
 %l - length from hip to torso, r - length of legs
 % Defining generalized coordinates:
@@ -221,7 +226,7 @@ h = [q2 - b2; q3 - b3];
 temp = sym(eye(6)); temp(1) = 1/delq;
 Lfh = jacobian(h,[s; q2; q3; dq])*temp*fx;
 dLfh = jacobian(Lfh,[s; q2; q3; dq])*temp;
- Write matrix used in feedback linearization - d/dx(Lfh) to file
+%Write matrix used in feedback linearization - d/dx(Lfh) to file
 % Inputs:
 % s = (q1 - q1_plus)/delq: gait timing variable
 % delq = q1_minus - q1_plus: difference in cyclic variable during gait
