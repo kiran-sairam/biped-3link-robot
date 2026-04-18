@@ -18,7 +18,7 @@ format short g
 %% Symbols
 syms q1 q2 q3 p_h p_v dp_h dp_v dq1 dq2 dq3 real
 syms r m Mh Mt l g real 
-
+params = [r,m,Mh,Mt,l,g];
 q = [q1; q2; q3;];
 dq = [dq1; dq2; dq3;];
 
@@ -100,11 +100,11 @@ J_Torso_num = double(subs(J_Torso, subs_list, vals_list));
 J_M1_num    = double(subs(J_M1,    subs_list, vals_list));
 J_M2_num    = double(subs(J_M2,    subs_list, vals_list));
 
-disp("Numeric pHip, pTorso, pM1, pM2:");
-disp(pHip_num); disp(pTorso_num); disp(pM1_num); disp(pM2_num);
-
-disp("Numeric Jacobians:");
-disp(J_Hip_num); disp(J_Torso_num); disp(J_M1_num); disp(J_M2_num);
+% disp("Numeric pHip, pTorso, pM1, pM2:");
+% disp(pHip_num); disp(pTorso_num); disp(pM1_num); disp(pM2_num);
+% 
+% disp("Numeric Jacobians:");
+% disp(J_Hip_num); disp(J_Torso_num); disp(J_M1_num); disp(J_M2_num);
 
 dq1_val = 0.5;
 dq2_val = 0.3;
@@ -115,8 +115,8 @@ dpTorso = J_Torso_num * [dq1_val; dq2_val; dq3_val];
 dpM1 = J_M1_num * [dq1_val; dq2_val; dq3_val];
 dpM2 = J_M2_num * [dq1_val; dq2_val; dq3_val];
 
-disp("Velocities in cartesian space:");
-disp(dpHip); disp(dpTorso); disp(dpM1); disp(dpM2);
+% disp("Velocities in cartesian space:");
+% disp(dpHip); disp(dpTorso); disp(dpM1); disp(dpM2);
 
 % masses 
 m_val = 1.0; 
@@ -125,14 +125,14 @@ Mt_val = 3.0;
 M_tot = Mh_val + Mt_val + 2*m_val;
 pCoM = (Mh_val*pHip + Mt_val*pTorso + m_val*pM1 + m_val*pM2)/M_tot;
 J_PCoM    = simplify(jacobian(pCoM,    q));
-disp("J_PCoM = ");    disp(J_PCoM);
+% disp("J_PCoM = ");    disp(J_PCoM);
 J_PCoM_num    = double(subs(J_PCoM,    subs_list, vals_list));
 pCoM_num    = double(subs(pCoM,    subs_list, vals_list));
 dpCoM = J_PCoM_num * [dq1_val; dq2_val; dq3_val];
-disp("CoM pose:");
-disp(pCoM_num)
-disp("CoM velocity:");
-disp(dpCoM)
+% disp("CoM pose:");
+% disp(pCoM_num)
+% disp("CoM velocity:");
+% disp(dpCoM)
 
 % kinetic energy equations
 
@@ -238,7 +238,7 @@ B = [0, 0; ...
 %       G: Gravity matrix
 %       B: 
 %
-write_symbolic_term_to_mfile(q,dq,params,D,C,G,B)
+write_symbolic_term_to_mfile(q,dq,params,D,C_logic,G,B)
 
 %-------------------------------------------------------------------------%
 %%%% Impact map
@@ -260,20 +260,20 @@ pm2_e = pm2 + p_e;
 P2e = P2 + p_e;
 
 % Extended velocities
-J_mh_e   = simplify(jacobian(pMh_e,   q));
-J_mt_e   = simplify(jacobian(pMt_e, q));
-J_m1_e   = simplify(jacobian(pm1_e,    q));
-J_m2_e   = simplify(jacobian(pm2_e,    q));
+J_mh_e   = simplify(jacobian(pMh_e,   qe));
+J_mt_e   = simplify(jacobian(pMt_e, qe));
+J_m1_e   = simplify(jacobian(pm1_e,    qe));
+J_m2_e   = simplify(jacobian(pm2_e,    qe));
 
-vMh_e = J_mh_e * [dq1; dq2; dq3];
-vMt_e = J_mt_e * [dq1; dq2; dq3];
-vm1_e = J_m1_e * [dq1; dq2; dq3];
-vm2_e = J_m2_e * [dq1; dq2; dq3];
+vMh_e = J_mh_e * dqe;
+vMt_e = J_mt_e * dqe;
+vm1_e = J_m1_e * dqe;
+vm2_e = J_m2_e * dqe;
 
-K_Mhe = 0.5*(dq')*(Mh*J_mh_e'*J_mh_e)*dq;
-K_Mte = 0.5*(dq')*(Mt*J_mt_e'*J_mt_e)*dq;
-K_m1e = 0.5*(dq')*(Mh*J_m1_e'*J_mh_e)*dq;
-K_m2e = 0.5*(dq')*(Mh*J_m2_e'*J_mh_e)*dq;
+K_Mhe = 0.5*(dqe')*(Mh*J_mh_e'*J_mh_e)*dqe;
+K_Mte = 0.5*(dqe')*(Mt*J_mt_e'*J_mt_e)*dqe;
+K_m1e = 0.5*(dqe')*(Mh*J_m1_e'*J_mh_e)*dqe;
+K_m2e = 0.5*(dqe')*(Mh*J_m2_e'*J_mh_e)*dqe;
 
 Ke = K_m1e + K_Mhe + K_Mte + K_m2e;
 
@@ -303,9 +303,16 @@ write_symbolic_term_to_mfile(q,dq,params,De,E,dY_dq)
 %%%% For controller
 
 % Vector fields
-fx = 0;
-gx = 0;
+D_inv = D \ eye(3);
+Omega = -C*dq-G;
+fx_under = D_inv*(Omega);
+fx = [dq; fx_under];
 
+gx_top = [0, 0, 0]';
+gx_under = D_Inv*B;
+gx = [gx_top; gx_under];
+
+disp()
 % Bezier poly - needed for output function
 syms s delq
 %s = (q1 - q1_plus)/delq; 

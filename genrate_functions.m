@@ -18,7 +18,7 @@ format short g
 %% Symbols
 syms q1 q2 q3 p_h p_v dp_h dp_v dq1 dq2 dq3 real
 syms r m Mh Mt l g real 
-
+params = [r,m,Mh,Mt,l,g];
 q = [q1; q2; q3;];
 dq = [dq1; dq2; dq3;];
 
@@ -100,11 +100,11 @@ J_Torso_num = double(subs(J_Torso, subs_list, vals_list));
 J_M1_num    = double(subs(J_M1,    subs_list, vals_list));
 J_M2_num    = double(subs(J_M2,    subs_list, vals_list));
 
-disp("Numeric pHip, pTorso, pM1, pM2:");
-disp(pHip_num); disp(pTorso_num); disp(pM1_num); disp(pM2_num);
-
-disp("Numeric Jacobians:");
-disp(J_Hip_num); disp(J_Torso_num); disp(J_M1_num); disp(J_M2_num);
+% disp("Numeric pHip, pTorso, pM1, pM2:");
+% disp(pHip_num); disp(pTorso_num); disp(pM1_num); disp(pM2_num);
+% 
+% disp("Numeric Jacobians:");
+% disp(J_Hip_num); disp(J_Torso_num); disp(J_M1_num); disp(J_M2_num);
 
 dq1_val = 0.5;
 dq2_val = 0.3;
@@ -115,8 +115,8 @@ dpTorso = J_Torso_num * [dq1_val; dq2_val; dq3_val];
 dpM1 = J_M1_num * [dq1_val; dq2_val; dq3_val];
 dpM2 = J_M2_num * [dq1_val; dq2_val; dq3_val];
 
-disp("Velocities in cartesian space:");
-disp(dpHip); disp(dpTorso); disp(dpM1); disp(dpM2);
+% disp("Velocities in cartesian space:");
+% disp(dpHip); disp(dpTorso); disp(dpM1); disp(dpM2);
 
 % masses 
 m_val = 1.0; 
@@ -125,14 +125,14 @@ Mt_val = 3.0;
 M_tot = Mh_val + Mt_val + 2*m_val;
 pCoM = (Mh_val*pHip + Mt_val*pTorso + m_val*pM1 + m_val*pM2)/M_tot;
 J_PCoM    = simplify(jacobian(pCoM,    q));
-disp("J_PCoM = ");    disp(J_PCoM);
+% disp("J_PCoM = ");    disp(J_PCoM);
 J_PCoM_num    = double(subs(J_PCoM,    subs_list, vals_list));
 pCoM_num    = double(subs(pCoM,    subs_list, vals_list));
 dpCoM = J_PCoM_num * [dq1_val; dq2_val; dq3_val];
-disp("CoM pose:");
-disp(pCoM_num)
-disp("CoM velocity:");
-disp(dpCoM)
+% disp("CoM pose:");
+% disp(pCoM_num)
+% disp("CoM velocity:");
+% disp(dpCoM)
 
 % kinetic energy equations
 
@@ -142,7 +142,7 @@ KE = 0.5*(dq')*(D)*dq;
 
 PE = g *((Mt*pTorso(1))+(Mh*pHip(1))+(m*pM1(1))+(m*pM2(1)));
 
-coriolis_matrix(D, q, dq);
+C = coriolis_matrix(D, q, dq);
 
 %TEST CODE BELOW FOR THE 3 FOR LOOPS
 
@@ -161,27 +161,6 @@ function C = coriolis_matrix(D, q, qdot)
 
 n = length(q);  % number of generalized coordinates
 C = sym(zeros(n, n));
-
-C_logic = sym(zeros(n,n));
-tic
-for k = 1:n
-    for j = 1:n
-        c_kj = sym(0);
-        for i = 1:n
-            % Christoffel symbol: (1/2)*(dd_kj/dq_i + dd_ki/dq_j - dd_ij/dq_k)
-            christoffel = (1/2) * ( diff(D(k,j), q(i)) ...
-                                  + diff(D(k,i), q(j)) ...
-                                  - diff(D(i,j), q(k)) );
-            c_kj = c_kj + christoffel * qdot(i);
-        end
-        C(k,j) = simplify(c_kj);
-    end
-end
-elapsed_time = toc;
-% disp("Brute force elapsed time")
-% disp(elapsed_time)
-% disp("C_bruteforce")
-% disp(C)
 
 global dict
 dict = containers.Map('KeyType', 'char', 'ValueType', 'double');
@@ -210,7 +189,7 @@ for k = 1:n
             end
             c_kj = c_kj + christoffel * qdot(i);
         end
-        C_logic(k,j) = simplify(c_kj);
+        C(k,j) = simplify(c_kj);
     end
 end
 % elapsed_time = toc;
@@ -220,6 +199,9 @@ end
 % disp(C_logic)
 
 end
+
+G = jacobian(PE,q).'; 
+G = simplify(G);
 
 %%%%%%%%%%%%%%%%%% What is control input matrix? %%%%%%%%%%%%%%%%%%%%%%%%%%
 B = [0, 0; ...
@@ -303,9 +285,16 @@ write_symbolic_term_to_mfile(q,dq,params,De,E,dY_dq)
 %%%% For controller
 
 % Vector fields
-fx = 0;
-gx = 0;
+D_inv = D \ eye(3);
+Omega = -C*dq-G;
+fx_under = D_inv*(Omega);
+fx = [dq; fx_under];
 
+gx_top = [0, 0, 0]';
+gx_under = D_Inv*B;
+gx = [gx_top; gx_under];
+
+disp()
 % Bezier poly - needed for output function
 syms s delq
 %s = (q1 - q1_plus)/delq; 

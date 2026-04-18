@@ -53,7 +53,7 @@ params = [r,m,Mh,Mt,l,g];
 %
 % Output: [D,C,G,B]
 %
-[D,C,G,~] = func_compute_D_C_G_B(q,dq,params);
+[D,C,G,B] = func_compute_D_C_G_B(q,dq,params);
 
 
 %%%%%%%%%%%%%%%%%% Apply dynamics partitioning to compute the zero dynamics
@@ -61,8 +61,14 @@ params = [r,m,Mh,Mt,l,g];
 
 % E.g., 
 
-D1 = D(1, 1);
-D2 = 
+D_inv = D \ eye(3);
+Omega = -C*dq'-G;
+fx_under = D_inv*(Omega);
+fx = [dq'; fx_under'];
+
+gx_top = [0, 0, 0]';
+gx_under = D_Inv*B;
+gx = [gx_top; gx_under];
 H1 = 
 
 %------------------------------------------------------------------------%
