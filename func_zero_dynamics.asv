@@ -49,8 +49,14 @@ q_converted = eye(3)*h_desired;
 %dq_converted = jacobian(h_desired, s) * (1/delq);
 
 % find based on s and bezier definition
-q2_desired = q_converted(2);
-q3_desired = q_converted(3);
+
+
+q2 = q_converted(2);
+%q2_desired = q_converted(2);
+q3 = q_converted(3);
+%q3_desired = q_converted(3);
+
+%Flagged look at 6.13 in grizzle book. 
 dq2 = db_ds2 * (dq1/delq) %dq_converted(2);
 dq3 = db_ds3 * (dq1/delq) %dq_converted(3);
 
@@ -122,7 +128,7 @@ beta1 = func_compute_beta1(s, [dq1, delq], [alpha2, alpha3]);
 % Outputs:
 %       db/ds
 %
-    function db_ds = compute_partial_bezier(M, alpha, s)
+function db_ds = compute_partial_bezier(M, alpha, s)
 
     db_ds = 0;
     for k = 0:M-1

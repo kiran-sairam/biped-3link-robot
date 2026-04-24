@@ -128,7 +128,7 @@ beta1 = func_compute_beta1(s, [dq1, delq], [alpha2, alpha3]);
 % Outputs:
 %       db/ds
 %
-    function db_ds = compute_partial_bezier(M, alpha, s)
+function db_ds = compute_partial_bezier(M, alpha, s)
 
     db_ds = 0;
     for k = 0:M-1
