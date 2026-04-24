@@ -31,9 +31,7 @@ params = [r,m,Mh,Mt,l,g];
 % Include the util and autogen folder to use write_symbolic_term_to_mfile.m
 % and export outputs to autogen folder
 cd('C:\Users\Prath\OneDrive\Documents\GitHub\biped-3link-robot')
-
 addpath('C:\Users\Prath\OneDrive\Documents\GitHub\biped-3link-robot\util');
-
 addpath('C:\Users\Prath\OneDrive\Documents\GitHub\biped-3link-robot\autogen');
 
 %Mh - mass of hip, Mt - mass of torso, m - mass of legs

@@ -41,15 +41,22 @@ function b = control_points(s, a2)
     end
 end
 
-b1 = control_points(s, alpha2);
-b2 = control_points(s, alpha3);
-h_desired = [q1; b1; b2];
+b2 = control_points(s, alpha2);
+b3 = control_points(s, alpha3);
+h_desired = [q1; b2; b3];
+%need to change
 q_converted = eye(3)*h_desired;
 %dq_converted = jacobian(h_desired, s) * (1/delq);
 
 % find based on s and bezier definition
+
+
 q2 = q_converted(2);
+%q2_desired = q_converted(2);
 q3 = q_converted(3);
+%q3_desired = q_converted(3);
+
+%Flagged look at 6.13 in grizzle book. 
 dq2 = db_ds2 * (dq1/delq) %dq_converted(2);
 dq3 = db_ds3 * (dq1/delq) %dq_converted(3);
 
