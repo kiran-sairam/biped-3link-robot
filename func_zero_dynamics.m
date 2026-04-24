@@ -45,13 +45,13 @@ b1 = control_points(s, alpha2);
 b2 = control_points(s, alpha3);
 h_desired = [q1; b1; b2];
 q_converted = eye(3)*h_desired;
-dq_converted = jacobian(h_desired, s) * (1/delq);
+%dq_converted = jacobian(h_desired, s) * (1/delq);
 
 % find based on s and bezier definition
 q2 = q_converted(2);
 q3 = q_converted(3);
-dq2 = dq_converted(2);
-dq3 = dq_converted(3);
+dq2 = db_ds2 * (dq1/delq) %dq_converted(2);
+dq3 = db_ds3 * (dq1/delq) %dq_converted(3);
 
 q = [q1, q2, q3];
 dq = [dq1, dq2, dq3];
@@ -121,8 +121,20 @@ beta1 = func_compute_beta1(s, [dq1, delq], [alpha2, alpha3]);
 % Outputs:
 %       db/ds
 %
-db_ds2 = 
-db_ds3 = 
+    function db_ds = compute_partial_bezier(M, alpha, s)
+
+    db_ds = 0;
+    for k = 0:M-1
+        db_ds = db_ds + M * ...
+            (alpha(k+2) - alpha(k+1)) * ...
+            (factorial(M-1)/(factorial(k)*factorial(M-1-k))) * ...
+            s^k * (1-s)^(M-1-k);
+    end
+
+end
+
+db_ds2 = compute_partial_bezier(M,alpha2,s) 
+db_ds3 = compute_partial_bezier(M,alpha3,s)
 
 beta2 = [db_ds2; db_ds3]/delq;
 
