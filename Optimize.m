@@ -1,3 +1,4 @@
+clc; clear;
 % Optimize intial conditions for ZD states and Bezier coeffs using fmincon
 %
 % Zero dynamics simulator takes pre-impact condition so that should be I.C.
@@ -6,12 +7,11 @@
 %------------------------------------------------------------------------%
 
 %[q1, dq1] pre impact conditions - should be negative for both
-z_minus = 
+z_minus = [-10, -30];
 
 % Bezier coefficients
-alpha =              %for q2 - alpha 3rd - 5th
-gamma =          %for q3 - alpha 3rd - 5th
-
+alpha = [5, 8, 10];             %for q2 - alpha 3rd - 5th
+gamma = [2, 4, 6];            %for q3 - alpha 3rd - 5th
 
 %   f0 = [q10, dq10, alpha(3-5)_q2, alpha(3-5)_q3]
 %       q10: pre-impact inital angle for q1
@@ -28,9 +28,9 @@ f0 = [z_minus, alpha, gamma];   %parameters that need to be optimized
 % Lower and upper bounds for optimizer - [q1 q1_dot, alpha q2, alpha q3]
 %
 % epsilon for angles
-eps = 
+eps = 0.35;
 % epsilon for velocity
-eps_v = 
+eps_v = 1.0;
 lb = [z_minus(1)-eps, z_minus(2)-eps_v, alpha-eps, gamma-eps];
 ub = [z_minus(1)+eps, z_minus(2)+eps_v, alpha+eps, gamma+eps];
 
@@ -44,7 +44,6 @@ opts = optimoptions('fmincon','Algorithm','interior-point',...
                     'StepTolerance',1e-6,...
                     'FunctionTolerance',1e-2);
 opts.Display = 'iter';
-
 
 % using only bounds and nonlinear contraints
 %
@@ -103,8 +102,8 @@ function [J, z_sol] = func_cost_ZD(f)
 %%%% Compute cost
 
 % Variables needed to compute control action
-q1_min = -f(1);
-q1_max = f(1);
+q1_min = f(1);
+q1_max = -f(1);
 
 s_params = [q1_min, q1_max];
 
@@ -114,7 +113,9 @@ alpha3 = [-f(8)+2*f(6), -f(7)+2*f(6), f(6:8)];
 a = [alpha2, alpha3];
 
 J = 0;
-for i = 1:length(t_sol)
+
+for i = 2:length(t_sol)
+
     % Post compute control action
     %
     % Inputs: [z, a, s_params]
@@ -126,9 +127,22 @@ for i = 1:length(t_sol)
     %       u: control action
     %
     u = func_compute_control_action(z_sol(i,:),a,s_params);
-    
-    % Cost = sum of norms of control action
-    J = 
+
+    dt = t_sol(i) - t_sol(i-1);
+
+    % Integral of squared control effort
+    J = J + norm(u)^2 * dt;
+
+end
+
+% Divide by step length
+[r,~,~,~,~,~] = func_model_params;
+step_length = 2*r*sin(abs(f(1)));
+
+if step_length < 1e-6
+    J = 1e6;
+else
+    J = J / step_length;
 end
 
 end
@@ -167,10 +181,13 @@ z_i = f(1:2);       %Pre-impact states
 z_f = z_sol(end,:);     %final values after swing phase and right before the next impact
 
 % Nonlinear inequality constraints
-c = [];
+%Flag
+c = [0.15 - abs(f(1))];   % require |q1| >= 0.15 rad
+
 % Nonlinear equality constraints
-ceq = [norm(z_i(1) - z_f(1)); norm(z_i(2) - z_f(2))]; 
+ceq = [z_i(1) - z_f(1);
+       z_i(2) - z_f(2)];
+
 % Force pre-impact condition and final solution of ODE45 to be the same
 
 end
-

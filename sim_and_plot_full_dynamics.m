@@ -20,7 +20,7 @@ set_path
 % f = [-0.4821, -3.597, 0.2048, 0.1918, 0.3672, 0.6869, 2.3175, 2.2645, 2.8316];
 % x_max = 0.2048; 
 
-
+clc; clear;
 %   f = [q10, dq10, alpha(3-5)_q2, alpha(3-5)_q3]
 %       q10: pre-impact inital angle for q1
 %       dq10: pre-impact inital velocity for dq1
@@ -29,7 +29,7 @@ set_path
 %       alpha(3-5)_q3: 
 %                   3rd to 5th Bezier coefficient for q3
 %
-f = 
+f = [-9.6501  -29.0000    5.3500    8.3500   10.3500    1.6500    3.6500    6.3500];
 
 %------------------------------------------------------------------------%
 

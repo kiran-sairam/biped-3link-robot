@@ -19,12 +19,14 @@
 % Outputs:
 %       u: control action
 %
+
+%Flag
 function u = func_feedback(x,alpha,s_params)
 % gains
-kp1 = 
-kp2 = 
-kd1 = 
-kd2 = 
+kp1 = -1;
+kp2 = -1;
+kd1 = -0.05;
+kd2 = -0.05;
 
 % Seperating inputs
 q = x(1:3);
@@ -61,33 +63,61 @@ s = func_gait_timing(q(1), q1_min, q1_max);
 [D,C,G,B] = func_compute_D_C_G_B(q,dq,params);
 
 % Defining fx and gx
-fx = 
-gx = 
-
+fx = [dq; D\(-C*dq - G)];
+gx = [zeros(3,2); D\B];
 % find y
-b2 = 
-b3 =  
-h = [q(2) - b2; q(3) - b3];         
+b2 = control_points(s, alpha2);
+b3 = control_points(s, alpha3);
+
+h = [q(2) - b2; q(3) - b3];
 y = h;
 
+% Bezier derivatives
+db_ds2 = compute_partial_bezier(4, alpha2, s);
+db_ds3 = compute_partial_bezier(4, alpha3, s);
+
 % Calculating y_dot
-dh_dx = 
-dh_dx(1,1) = 
-dh_dx(2,1) = 
-Lfh = 
+dh_dx = zeros(2,6);
+dh_dx(1,1) = -db_ds2/delq;
+dh_dx(2,1) = -db_ds3/delq;
+Lfh = dh_dx*fx;
 dy = Lfh;
 
 %%%% PD controller
 Kp = [kp1,0; 0,kp2];
 Kd = [kd1,0; 0,kd2];
-v = 
+v = -Kp*y - Kd*dy;
 
 %%%% Feedback linerization:
 dLfh = func_compute_dLfh([s,delq],dq(1),[alpha2,alpha3]);
-L2fh = 
-LgLfh = 
-
+L2fh = dLfh*fx;
+LgLfh = dLfh*gx;
 % Control action that uses feedback linearization with PD controller
-u = 
+u = LgLfh \ (-L2fh + v);
+
+end
+
+function b = control_points(s, alpha)
+
+    M = 4;
+    b = 0;
+
+    for k = 0:M
+        b = b + alpha(k+1) * ...
+            (factorial(M)/(factorial(k)*factorial(M-k))) * ...
+            s^k * (1-s)^(M-k);
+    end
+
+end
+
+function db_ds = compute_partial_bezier(M, alpha, s)
+
+    db_ds = 0;
+
+    for k = 0:M-1
+        db_ds = db_ds + M*(alpha(k+2) - alpha(k+1)) * ...
+            (factorial(M-1)/(factorial(k)*factorial(M-1-k))) * ...
+            s^k * (1-s)^(M-1-k);
+    end
 
 end

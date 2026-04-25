@@ -56,6 +56,24 @@ q2 = q_converted(2);
 q3 = q_converted(3);
 %q3_desired = q_converted(3);
 
+function db_ds = compute_partial_bezier(M, alpha, s)
+
+    db_ds = 0;
+    for k = 0:M-1
+        db_ds = db_ds + M * ...
+            (alpha(k+2) - alpha(k+1)) * ...
+            (factorial(M-1)/(factorial(k)*factorial(M-1-k))) * ...
+            s^k * (1-s)^(M-1-k);
+    end
+
+end
+
+M = 4;
+db_ds2 = compute_partial_bezier(M,alpha2,s) 
+db_ds3 = compute_partial_bezier(M,alpha3,s)
+
+beta2 = [db_ds2; db_ds3]/delq;
+
 %Flagged look at 6.13 in grizzle book. 
 dq2 = db_ds2 * (dq1/delq) %dq_converted(2);
 dq3 = db_ds3 * (dq1/delq) %dq_converted(3);
@@ -83,15 +101,23 @@ params = [r,m,Mh,Mt,l,g];
 
 % E.g., 
 
-D_inv = D \ eye(3);
-Omega = -C*dq'-G;
-fx_under = D_inv*(Omega);
-fx = [dq'; fx_under'];
+%Flag
+% D_inv = D \ eye(3);
+% Omega = -C*dq'-G;
+% fx_under = D_inv*(Omega);
+% fx = [dq'; fx_under'];
+% 
+% gx_top = [0, 0, 0]';
+% gx_under = D_inv*B;
+% gx = [gx_top; gx_under];
 
-gx_top = [0, 0, 0]';
-gx_under = D_Inv*B;
-gx = [gx_top; gx_under];
-H1 = eye(3);
+%Flag
+%H1 = eye(3);
+
+%Flag
+D1 = D(1,1);
+D2 = D(1,2:3);
+H1 = C(1,:)*dq' + G(1);
 
 %------------------------------------------------------------------------%
 
@@ -128,27 +154,30 @@ beta1 = func_compute_beta1(s, [dq1, delq], [alpha2, alpha3]);
 % Outputs:
 %       db/ds
 %
-function db_ds = compute_partial_bezier(M, alpha, s)
 
-    db_ds = 0;
-    for k = 0:M-1
-        db_ds = db_ds + M * ...
-            (alpha(k+2) - alpha(k+1)) * ...
-            (factorial(M-1)/(factorial(k)*factorial(M-1-k))) * ...
-            s^k * (1-s)^(M-1-k);
-    end
-
-end
-
-db_ds2 = compute_partial_bezier(M,alpha2,s) 
-db_ds3 = compute_partial_bezier(M,alpha3,s)
-
-beta2 = [db_ds2; db_ds3]/delq;
+% function db_ds = compute_partial_bezier(M, alpha, s)
+% 
+%     db_ds = 0;
+%     for k = 0:M-1
+%         db_ds = db_ds + M * ...
+%             (alpha(k+2) - alpha(k+1)) * ...
+%             (factorial(M-1)/(factorial(k)*factorial(M-1-k))) * ...
+%             s^k * (1-s)^(M-1-k);
+%     end
+% 
+% end
+% 
+% db_ds2 = compute_partial_bezier(M,alpha2,s) 
+% db_ds3 = compute_partial_bezier(M,alpha3,s)
+% 
+% beta2 = [db_ds2; db_ds3]/delq;
 
 %------------------------------------------------------------------------%
 
 dz(1) = z(2);
-dz(2) = 
+
+%Flag
+dz(2) = -(D2*beta1 + H1)/(D1 + D2*beta2);
 
 dz = [dz(1), dz(2)]';
 end
