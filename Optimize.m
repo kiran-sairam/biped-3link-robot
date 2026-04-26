@@ -9,7 +9,7 @@ set_path
 %------------------------------------------------------------------------%
 
 %[q1, dq1] pre impact conditions - should be negative for both
-z_minus = [-0.3478, -2.0765];
+z_minus = [-0.325, -3.0765];
 
 % Bezier coefficients
 %          3   6    9
@@ -36,7 +36,7 @@ eps_alpha = 0.05; %tighter window for leg angles
 
 eps_gamma = 0.35; % Wider window for torso angles
 
-eps = 0.35 % for q1
+eps = 0.1 % for q1
 
 % epsilon for velocity
 eps_v = 1.0;
@@ -211,7 +211,7 @@ z_f = z_sol(end,:);     %final values after swing phase and right before the nex
 
 % Nonlinear inequality constraints
 %Flag
-c = [0.15 - abs(f(1))];   % require |q1| >= 0.15 rad
+c = [0.3 - abs(f(1))];   % require |q1| >= 0.15 rad
 
 % Nonlinear equality constraints
 ceq = [z_i(1) - z_f(1);

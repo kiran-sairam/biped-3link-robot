@@ -29,8 +29,8 @@ q1 = z(1); dq1 = z(2);
 %
 s = func_gait_timing(q1,z_min,z_max);
 
-alpha2 = a(1:5)
-alpha3 = a(6:10)
+alpha2 = a(1:5);
+alpha3 = a(6:10);
 
 %Need bezier formulation
 function b = control_points(s, a2)
