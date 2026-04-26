@@ -11,11 +11,11 @@ set_path
 %                   3rd to 5th Bezier coefficient for q3
 %
 % Manually tuned (working):
-f = 
+f = [ -0.64896      -2.2698      0.10266      0.21016      0.72138       3.0566       3.0742       3.0025];
 
 z_tot = [];
 
-n = 5;
+n = 100;
 
 for i = 1:n
     

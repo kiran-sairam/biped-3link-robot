@@ -23,27 +23,29 @@ ind0(length(ind0)+1) = length(t)+1;
 [r,m,Mh,Mt,l,g] = func_model_params;
 params = [r,m,Mh,Mt,l,g];
 
-%%% Estimate x axis limits for animation window
-% Find step length at begining of gait
-[~,~,~,~,~, P2_i] = func_compute_pMh_pMt_pm1_pm2_pcm_P2(x(1,1:3),x(1,4:6),params);
-delta = 0.5;
-xlim_min = P2_i(1) - delta;
-xlim_max = -n*P2_i(1) + delta;
+%FLAG: removed xlim estimation from P2_i — axis limits are now fixed constants above
+%      so this calculation is no longer needed
 
-% Defining figure properties
+%FLAG: fixed figure to a large constant screen size so the window is always
+%      the same regardless of simulation length, and axis limits are fixed
+%      so the view does not change mid-animation (no need to zoom manually)
 fh = figure('Name','3 link biped model in the sagittal plane',...
     'Renderer','opengl',...
-    'GraphicsSmoothing','on');
+    'GraphicsSmoothing','on',...
+    'Units','normalized',...
+    'OuterPosition',[0 0 1 1]);   % full screen
 ah = axes('Box','on',...
-    'XGrid','off',...
-    'YGrid','off',...
+    'XGrid','on',...
+    'YGrid','on',...
     'DataAspectRatio',[1,1,1],...
     'PlotBoxAspectRatio',[1,1,1],...
     'Parent',fh);
 xlabel(ah,'[m]');
 ylabel(ah,'[m]');
-xlim(ah,[xlim_min, xlim_max]);
-ylim(ah,[-0.5 2]);
+%FLAG: axis limits are now fixed constants — wide enough to always show the
+%      full gait without depending on P2_i which can vary run to run
+xlim(ah,[-1.5, 4.0]);
+ylim(ah,[-0.5, 2.5]);
 
 hold(ah,'off'); % To animate
 

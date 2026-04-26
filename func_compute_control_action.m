@@ -33,6 +33,10 @@ x = func_map_z_x(z,a,s_params);
 q = x(1:3);
 dq = x(4:6);
 
+%Flag
+q = q(:);
+dq = dq(:);
+
 [r,m,Mh,Mt,l,g] = func_model_params;
 params = [r,m,Mh,Mt,l,g];
 

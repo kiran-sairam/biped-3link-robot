@@ -21,6 +21,10 @@ params = [r,m,Mh,Mt,l,g];
 % Get matrices to compute impact
 [De,E,dY_dq] = func_compute_De_E_dY_dq(q_minus, dq_minus, params);
 
+%FLAG: dY_dq is overridden to zeros here — this ignores the computed ground
+%      contact constraint Jacobian from func_compute_De_E_dY_dq.
+%      If the swing foot constraint is not active at impact this may be intentional,
+%      but if post-impact velocities look wrong, remove this line and use the computed value.
 dY_dq = zeros(2,3);
 
 %Impact map from pg56 (3.20)

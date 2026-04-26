@@ -32,11 +32,44 @@ s = func_gait_timing(q1,z_min,z_max);
 alpha2 = a(1:5);
 alpha3 = a(6:10);
 
+%Need bezier formulation
+function b = control_points(s, a2)
+    M = 4;
+    b = 0;
+    for k = 0:M
+        b = b + a2(k+1) * (factorial(M)/(factorial(k)*factorial(M-k))) * s^k * (1-s)^(M-k);
+    end
+end
+
+b2 = control_points(s, alpha2);
+b3 = control_points(s, alpha3);
+
+h_desired = [q1; b2; b3];
+
 % find based on s and bezier definition
-q2 = 
-q3 = 
-dq2 = 
-dq3 = 
+q2 = b2;
+%q2_desired = q_converted(2);
+q3 = b3;
+%q3_desired = q_converted(3);
+
+function db_ds = compute_partial_bezier(M, alpha, s)
+
+    db_ds = 0;
+    for k = 0:M-1
+        db_ds = db_ds + (alpha(k+2) - alpha(k+1)) *(factorial(M)/(factorial(k)*factorial(M-1-k))) *s^k * (1-s)^(M-1-k);
+    end
+
+end
+
+%FLAG: removed missing semicolons — these printed on every ODE45 evaluation
+%      (thousands of times per simulation step), spamming the console
+
+M = 4;
+db_ds2 = compute_partial_bezier(M,alpha2,s);
+db_ds3 = compute_partial_bezier(M,alpha3,s);
+
+dq2 = db_ds2 * (dq1/delq);
+dq3 = db_ds3 * (dq1/delq);
 
 q = [q1, q2, q3];
 dq = [dq1, dq2, dq3];
@@ -53,16 +86,22 @@ params = [r,m,Mh,Mt,l,g];
 %
 % Output: [D,C,G,B]
 %
-[D,C,G,~] = func_compute_D_C_G_B(q,dq,params);
+[D,C,G,B] = func_compute_D_C_G_B(q,dq,params);
 
 
 %%%%%%%%%%%%%%%%%% Apply dynamics partitioning to compute the zero dynamics
 %%%%%%%%%%%%%%%%%% equations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % E.g., 
-D1 = D(1, 1);
-D2 = 
-H1 = 
+D1 = D(1,1);
+D2 = D(1,2:3);
+
+H0 = [1, 0, 0; 
+      0, 1, 0];
+c = [0,0,1];
+
+H1 = H0;
+
 
 %------------------------------------------------------------------------%
 
@@ -99,15 +138,14 @@ beta1 = func_compute_beta1(s, [dq1, delq], [alpha2, alpha3]);
 % Outputs:
 %       db/ds
 %
-db_ds2 = 
-db_ds3 = 
-
-beta2 = [db_ds2; db_ds3]/delq;
 
 %------------------------------------------------------------------------%
 
+beta2 = [db_ds2; db_ds3]/delq;
+
 dz(1) = z(2);
-dz(2) = 
+
+dz(2) = -(D2*beta1 + C(1,:)*dq' + G(1)) / (D1 + D2*beta2);
 
 dz = [dz(1), dz(2)]';
 end
