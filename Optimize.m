@@ -4,14 +4,18 @@ clc; clear;
 % Zero dynamics simulator takes pre-impact condition so that should be I.C.
 % for fmincon as well
 
+set_path
+
 %------------------------------------------------------------------------%
 
 %[q1, dq1] pre impact conditions - should be negative for both
-z_minus = [-10, -30];
+z_minus = [-0.2, -1.5];
 
 % Bezier coefficients
-alpha = [5, 8, 10];             %for q2 - alpha 3rd - 5th
-gamma = [2, 4, 6];            %for q3 - alpha 3rd - 5th
+%          3   6    9
+alpha = [0.05,0.1,0.15];             %for q2 - alpha 3rd - 5th
+%         120  90   60
+gamma = [2.09,1.57,0.2];            %for q3 - alpha 3rd - 5th
 
 %   f0 = [q10, dq10, alpha(3-5)_q2, alpha(3-5)_q3]
 %       q10: pre-impact inital angle for q1
@@ -28,11 +32,17 @@ f0 = [z_minus, alpha, gamma];   %parameters that need to be optimized
 % Lower and upper bounds for optimizer - [q1 q1_dot, alpha q2, alpha q3]
 %
 % epsilon for angles
-eps = 0.35;
+eps_alpha = 0.05; %tighter window for leg angles
+
+eps_gamma = 0.35; % Wider window for torso angles
+
+eps = 0.35 % for q1
+
 % epsilon for velocity
 eps_v = 1.0;
-lb = [z_minus(1)-eps, z_minus(2)-eps_v, alpha-eps, gamma-eps];
-ub = [z_minus(1)+eps, z_minus(2)+eps_v, alpha+eps, gamma+eps];
+
+lb = [z_minus(1)-eps, z_minus(2)-eps_v, alpha-eps_alpha, gamma-eps_gamma];
+ub = [z_minus(1)+eps, z_minus(2)+eps_v, alpha+eps_alpha, gamma+eps_gamma];
 
 %------------------------------------------------------------------------%
 
@@ -102,8 +112,8 @@ function [J, z_sol] = func_cost_ZD(f)
 %%%% Compute cost
 
 % Variables needed to compute control action
-q1_min = f(1);
-q1_max = -f(1);
+q1_min = -f(1);
+q1_max = f(1);
 
 s_params = [q1_min, q1_max];
 
@@ -135,11 +145,30 @@ for i = 2:length(t_sol)
 
 end
 
-% Divide by step length
-[r,~,~,~,~,~] = func_model_params;
-step_length = 2*r*sin(abs(f(1)));
+z_final = z_sol(end,:);
 
-if step_length < 1e-6
+% Compute the final angle and velocity constraints
+q1_final = z_final(1);
+dq1_final = z_final(2);
+
+%Compute joint positions at end of swing
+q = [q1_final, alpha2(end),alpha3(end)];
+dq = [dq1_final,0,0];
+
+%Compute model parameters
+[r,m,Mh,Mt,l,g] = func_model_params;
+params = [r,m,Mh,Mt,l,g];
+
+%Compute P2H at end of swing leg
+[~,~,~,~,~,P2] = func_compute_pMh_pMt_pm1_pm2_pcm_P2(q,dq,params);
+
+% Divide by step length
+
+% Horizontal component of P2 (end of swing leg)
+step_length = abs(P2(1));
+
+% Normalize cost by step length
+if step_length < 1e-6 || isnan(J) || isinf(J)
     J = 1e6;
 else
     J = J / step_length;

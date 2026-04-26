@@ -29,24 +29,27 @@ clc; clear;
 %       alpha(3-5)_q3: 
 %                   3rd to 5th Bezier coefficient for q3
 %
-f = [-9.6501  -29.0000    5.3500    8.3500   10.3500    1.6500    3.6500    6.3500];
+f = [ -0.55      -1.5154          0.1         0.15          0.1         1.74         1.22         0.55];
 
 %------------------------------------------------------------------------%
 
 % extract bezier coeffients
-alpha2 = [-f(5), -f(4), f(3:5)];
-alpha3 = [-f(8)+2*f(6), -f(7)+2*f(6),f(6:8)];
+%FLAG: alpha2 reconstruction was inconsistent with sim_zero_dynamics.m
+%      sim_zero_dynamics uses [-f(5)+2*f(3), -f(4)+2*f(3), f(3:5)] for symmetry
+%      must match exactly or ZD and full dynamics use different Bezier curves
+alpha2 = [-f(5)+2*f(3), -f(4)+2*f(3), f(3:5)];
+alpha3 = [-f(8)+2*f(6), -f(7)+2*f(6), f(6:8)];
 
 a = [alpha2,alpha3];
 
 % extract preimact states
-q1_minus = f(1);
+q1_minus =  f(1);
 dq1_minus = f(2);
 
 % maximum and minimum angles for q1 during a sigle gait
-x_max = q1_minus;  
-x_min = -q1_minus;      % negative to ensure symmetry within gait
-delq = x_max - x_min;
+x_max =   q1_minus  
+x_min =  -q1_minus      % negative to ensure symmetry within gait
+delq = x_max - x_min
 
 %------------------------------------------------------------------------%
 %%%% Impact map
@@ -75,10 +78,13 @@ x_minus = [q1_minus, q2_minus, q3_minus, dq1_minus, dq2_minus, dq3_minus];
 %
 [x_plus0, ~] = func_impact_map(x_minus);
 
-s_params = [x_plus0(end,1), x_max];
+%FLAG: s_params must use fixed q1_min/q1_max from the gait design (symmetric around 0)
+%      x_plus0(end,1) is the post-impact q1 which changes each step and is NOT q1_min
+%      q1_min is always -x_max by symmetry
+s_params = [x_min, x_max];
 
 %%%% Simulate
-[t_tot,x_tot] = sim(x_plus0, a, s_params);
+[t_tot,x_tot] = sim(x_plus0, a, s_params, x_min, x_max);
 
 %------------------------------------------------------------------------%
 
@@ -106,14 +112,17 @@ animate_results(t_tot,x_tot)
 %   x_tot: [q, dq]
 %       output of ODE45 for all steps appended together
 %
-function [t_tot,x_tot] = sim(x_plus0, a, s_params)
+function [t_tot,x_tot] = sim(x_plus0, a, s_params, x_min, x_max)
 
 q1_min = s_params(1);
 q1_max = s_params(2);
 
 ti = 0; tf = 5;
 
-options = odeset('Event',@event,'AbsTol',1e-6,'RelTol',1e-6);
+%FLAG: 'Event' (singular) is not a valid odeset key — MATLAB silently ignores it
+%      must be 'Events' (plural) or the event function never fires,
+%      causing the simulation to always run to tf=5 and never detect impact
+options = odeset('Events',@event,'AbsTol',1e-6,'RelTol',1e-6);
 
 n = 10;     % Number of desired steps the biped should take
 
@@ -121,6 +130,10 @@ n = 10;     % Number of desired steps the biped should take
 t_tot = []; x_tot = [];
 
 for i = 1:n
+    
+    %FLAG: ti must reset to 0 each step so ODE45 time starts fresh
+    %      and find(t==0) in animate_results correctly identifies step boundaries
+    ti = 0;
     
     [t,x_sol] = ode45(@(t,x) func_full_dynamics(t,x,a,s_params), [ti, tf], x_plus0, options);
     
@@ -130,12 +143,21 @@ for i = 1:n
     % New initial condition
     x_plus0 = x_plus(end,:);
     
+    %FLAG: s_params uses fixed gait bounds — these are design parameters that
+    %      do not change step to step. Removed the per-step q1_min update
+    %      which was incorrectly drifting the gait timing window each step.
+    s_params = [q1_min, q1_max];
+    
     if isempty(t_tot)
         t_end = 0;
+    %FLAG: t_end was never updated after step 1, causing all steps to start
+    %      at t=0 in the appended time vector — fixed by reading last time value
+    else
+        t_end = t_tot(end);
     end
     
     % append
-    t_tot = [t_tot; t_end + t];
+    t_tot = [t_tot; t];
     x_tot = [x_tot; x_sol];
     
     disp(['Step#...',num2str(i)]);

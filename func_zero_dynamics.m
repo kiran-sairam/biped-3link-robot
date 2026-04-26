@@ -44,16 +44,13 @@ end
 b2 = control_points(s, alpha2);
 b3 = control_points(s, alpha3);
 h_desired = [q1; b2; b3];
-%need to change
-q_converted = eye(3)*h_desired;
-%dq_converted = jacobian(h_desired, s) * (1/delq);
 
 % find based on s and bezier definition
 
 
-q2 = q_converted(2);
+q2 = b2;
 %q2_desired = q_converted(2);
-q3 = q_converted(3);
+q3 = b3;
 %q3_desired = q_converted(3);
 
 function db_ds = compute_partial_bezier(M, alpha, s)
@@ -68,15 +65,16 @@ function db_ds = compute_partial_bezier(M, alpha, s)
 
 end
 
+%FLAG: removed missing semicolons — these printed on every ODE45 evaluation
+%      (thousands of times per simulation step), spamming the console
 M = 4;
-db_ds2 = compute_partial_bezier(M,alpha2,s) 
-db_ds3 = compute_partial_bezier(M,alpha3,s)
+db_ds2 = compute_partial_bezier(M,alpha2,s);
+db_ds3 = compute_partial_bezier(M,alpha3,s);
 
-beta2 = [db_ds2; db_ds3]/delq;
 
-%Flagged look at 6.13 in grizzle book. 
-dq2 = db_ds2 * (dq1/delq) %dq_converted(2);
-dq3 = db_ds3 * (dq1/delq) %dq_converted(3);
+
+dq2 = db_ds2 * (dq1/delq);
+dq3 = db_ds3 * (dq1/delq);
 
 q = [q1, q2, q3];
 dq = [dq1, dq2, dq3];
@@ -173,6 +171,8 @@ beta1 = func_compute_beta1(s, [dq1, delq], [alpha2, alpha3]);
 % beta2 = [db_ds2; db_ds3]/delq;
 
 %------------------------------------------------------------------------%
+
+beta2 = [db_ds2; db_ds3]/delq;
 
 dz(1) = z(2);
 

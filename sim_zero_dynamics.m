@@ -16,8 +16,8 @@
 function [t_sol, z_sol] = sim_zero_dynamics(f)
 
 %Flag
-z_min = f(1);  % To maintain symmetry min angle should be -ve of pre impact angle
-z_max = -f(1); % Pre impact angle should be max for gait
+z_min = -f(1);  % To maintain symmetry min angle should be -ve of pre impact angle
+z_max = f(1); % Pre impact angle should be max for gait
 
 delq = z_max - z_min;
 

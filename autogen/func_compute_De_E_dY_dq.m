@@ -1,6 +1,6 @@
 function [De,E,dY_dq]= func_compute_De_E_dY_dq(q,dq,param)
 %%%%%%  func_compute_De_E_dY_dq.m
-%%%%  04/18/26
+%%%%  04/25/26
 %%%%
 %%%%
 %%%%
