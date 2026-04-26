@@ -1,6 +1,6 @@
 function [pMh,pMt,pm1,pm2,pcm,P2]= func_compute_pMh_pMt_pm1_pm2_pcm_P2(q,dq,param)
 %%%%%%  func_compute_pMh_pMt_pm1_pm2_pcm_P2.m
-%%%%  04/25/26
+%%%%  04/26/26
 %%%%
 %%%%
 %%%%

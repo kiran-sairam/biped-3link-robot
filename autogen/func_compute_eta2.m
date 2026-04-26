@@ -1,6 +1,6 @@
 function [eta2]= func_compute_eta2(q,dq,param)
 %%%%%%  func_compute_eta2.m
-%%%%  04/25/26
+%%%%  04/26/26
 %%%%
 %%%%
 %%%%

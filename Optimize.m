@@ -12,9 +12,8 @@ set_path
 z_minus = [-0.325, -3.0765];
 
 % Bezier coefficients
-%          3   6    9
 alpha = [0.1520,0.1604,0.7711];             %for q2 - alpha 3rd - 5th
-%         120  90   60
+
 gamma = [2.8535,2.8806,3.2398];            %for q3 - alpha 3rd - 5th
 
 %   f0 = [q10, dq10, alpha(3-5)_q2, alpha(3-5)_q3]
@@ -210,8 +209,7 @@ z_i = f(1:2);       %Pre-impact states
 z_f = z_sol(end,:);     %final values after swing phase and right before the next impact
 
 % Nonlinear inequality constraints
-%Flag
-c = [0.3 - abs(f(1))];   % require |q1| >= 0.15 rad
+c = [0.3 - abs(f(1))];   % require |q1| >= 0.3 rad
 
 % Nonlinear equality constraints
 ceq = [z_i(1) - z_f(1);

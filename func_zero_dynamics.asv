@@ -29,8 +29,8 @@ q1 = z(1); dq1 = z(2);
 %
 s = func_gait_timing(q1,z_min,z_max);
 
-alpha2 = a(1:5)
-alpha3 = a(6:10)
+alpha2 = a(1:5);
+alpha3 = a(6:10);
 
 %Need bezier formulation
 function b = control_points(s, a2)
@@ -93,30 +93,15 @@ params = [r,m,Mh,Mt,l,g];
 %%%%%%%%%%%%%%%%%% equations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % E.g., 
+H0 = [1, 0, 0; 
+      0, 1, 0];
 
-%Flag
-% D_inv = D \ eye(3);
-% Omega = -C*dq'-G;
-% fx_under = D_inv*(Omega);
-% fx = [dq'; fx_under'];
-% 
-% gx_top = [0, 0, 0]';
-% gx_under = D_inv*B;
-% gx = [gx_top; gx_under];
+c = [0,0,1];
 
-%Flag
-%H1 = eye(3);
 
-H0 = [eye(2); 0 0];
-c =  [0 0 1];
-H = [H0, c];
-
-%H1 = C(1,:)*dq' + G(1);
-
-%Flag
 D1 = D(1,1);
 D2 = D(1,2:3);
-H1 = H(1);
+H1 = H0;
 
 
 %------------------------------------------------------------------------%
@@ -160,9 +145,6 @@ beta1 = func_compute_beta1(s, [dq1, delq], [alpha2, alpha3]);
 beta2 = [db_ds2; db_ds3]/delq;
 
 dz(1) = z(2);
-
-%Flag
-dz(2) = -(D2*beta1 + H1)/(D1 + D2*beta2);
 
 dz(2) = -(D2*beta1 + C(1,:)*dq' + G(1)) / (D1 + D2*beta2);
 

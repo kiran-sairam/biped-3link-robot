@@ -20,11 +20,8 @@
 %       u: control action
 %
 
-%Flag
 function u = func_feedback(x,alpha,s_params)
-%FLAG: PD gains — original values (-1, -0.05) were too weak for physical system
-%      increased to more typical values; tune further if biped still falls
-%      sign is negative because v = -Kp*y - Kd*dy (double negative = restoring force)
+% gains
 kp1 = 10000;
 kp2 = 10000;
 kd1 = 100;

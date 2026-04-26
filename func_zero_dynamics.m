@@ -93,31 +93,13 @@ params = [r,m,Mh,Mt,l,g];
 %%%%%%%%%%%%%%%%%% equations %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % E.g., 
-
-%Flag
-% D_inv = D \ eye(3);
-% Omega = -C*dq'-G;
-% fx_under = D_inv*(Omega);
-% fx = [dq'; fx_under'];
-% 
-% gx_top = [0, 0, 0]';
-% gx_under = D_inv*B;
-% gx = [gx_top; gx_under];
-
-%Flag
-%H1 = eye(3);
+D1 = D(1,1);
+D2 = D(1,2:3);
 
 H0 = [1, 0, 0; 
       0, 1, 0];
-
 c = [0,0,1];
 
-
-%H1 = C(1,:)*dq' + G(1);
-
-%Flag
-D1 = D(1,1);
-D2 = D(1,2:3);
 H1 = H0;
 
 
