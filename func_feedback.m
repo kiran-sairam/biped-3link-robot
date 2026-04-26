@@ -25,10 +25,10 @@ function u = func_feedback(x,alpha,s_params)
 %FLAG: PD gains — original values (-1, -0.05) were too weak for physical system
 %      increased to more typical values; tune further if biped still falls
 %      sign is negative because v = -Kp*y - Kd*dy (double negative = restoring force)
-kp1 = -1000;
-kp2 = -1000;
-kd1 = -500;
-kd2 = -500;
+kp1 = 10000;
+kp2 = 10000;
+kd1 = 100;
+kd2 = 100;
 
 % Seperating inputs
 q = x(1:3);
@@ -74,35 +74,33 @@ b3 = control_points(s, alpha3);
 h = [q(2) - b2; q(3) - b3];
 y = h;
 
-% Bezier derivatives
-db_ds2 = compute_partial_bezier(4, alpha2, s);
-db_ds3 = compute_partial_bezier(4, alpha3, s);
+%db_ds2 = compute_partial_bezier(4, alpha2, s);
+%db_ds3 = compute_partial_bezier(4, alpha3, s);
+
+dh_dq = [0,  1,  0;
+          0,  0,  1];
+y = h;
 
 % Calculating y_dot
-dh_dx = zeros(2,6);
-dh_dx(1,1) = -db_ds2/delq;
-dh_dx(2,1) = -db_ds3/delq;
-%FLAG: added missing direct partial derivatives dh/dq2 and dh/dq3
-%      h1 = q2 - b2(s), so dh1/dq2 = 1
-%      h2 = q3 - b3(s), so dh2/dq3 = 1
-%      without these Lfh is wrong and the feedback linearization is corrupted
-dh_dx(1,2) = 1;
-dh_dx(2,3) = 1;
-Lfh = dh_dx*fx;
+Lfh = dh_dq * dq;
 dy = Lfh;
 
 %%%% PD controller
 Kp = [kp1,0; 0,kp2];
 Kd = [kd1,0; 0,kd2];
-v = -Kp*y - Kd*dy;
+
+
 
 %%%% Feedback linerization:
 dLfh = func_compute_dLfh([s,delq],dq(1),[alpha2,alpha3]);
 L2fh = dLfh*fx;
-LgLfh = dLfh*gx;
+LgLfh = dh_dq*(D\B);
 % Control action that uses feedback linearization with PD controller
-u = LgLfh \ (-L2fh + v);
+u_star = -LgLfh \ L2fh;
+v = -LgLfh \ (Kp*y + Kd*dy);
 
+u = u_star + v;
+ 
 end
 
 function b = control_points(s, alpha)

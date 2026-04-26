@@ -9,13 +9,13 @@ set_path
 %------------------------------------------------------------------------%
 
 %[q1, dq1] pre impact conditions - should be negative for both
-z_minus = [-0.2, -1.5];
+z_minus = [-0.3478, -2.0765];
 
 % Bezier coefficients
 %          3   6    9
-alpha = [0.05,0.1,0.15];             %for q2 - alpha 3rd - 5th
+alpha = [0.1520,0.1604,0.7711];             %for q2 - alpha 3rd - 5th
 %         120  90   60
-gamma = [2.09,1.57,0.2];            %for q3 - alpha 3rd - 5th
+gamma = [2.8535,2.8806,3.2398];            %for q3 - alpha 3rd - 5th
 
 %   f0 = [q10, dq10, alpha(3-5)_q2, alpha(3-5)_q3]
 %       q10: pre-impact inital angle for q1
