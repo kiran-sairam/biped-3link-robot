@@ -43,6 +43,9 @@ for i = 1:n
 end
 
 figure
+set(gcf, 'Color', 'w');
+set(gca, 'Color', 'w', 'XColor','k','YColor','k');
+
 plot(z_tot(1,1),z_tot(1,2),'x'), hold on
 plot(z_tot(:,1),z_tot(:,2))
 hold off, grid on
@@ -50,3 +53,9 @@ title('Phase portrait of q_1 vd dq_1')
 xlabel('q_1 (rads)')
 ylabel('dq_1 (rads/s)')
 legend('Start','Trajectory')
+
+
+
+exportgraphics(gcf, 'phase_portrait.pdf', ...
+    'ContentType', 'vector', ...
+    'Resolution', 300);
